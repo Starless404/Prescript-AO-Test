@@ -30,24 +30,22 @@
 
 <script>
 function receiveWill() {
-    const subjects = ["Low Blood", "High Blood", "Noble Blood", "Pure Blood", "Hematomaniac"];
     
     // Updated with "sail in"
     const actionMap = {
-        "grind": ["Treasure charts", "Sea Charts", "Towers"],
+        "grind": ["Treasure charts", "Sea Charts", "Towers", "reputation"],
         "kill": ["Minibosses", "Story Bosses", "Sea monsters", "Rivals"],
         "sail in": ["the Bronze Sea", "the Nimbus Sea", "the Dark Sea"]
     };
     
     const conditions = ["for exactly 1 hour", "for an in-game week", "10 times", "without dying"];
 
-    const sub = subjects[Math.floor(Math.random() * subjects.length)];
     const actKeys = Object.keys(actionMap);
     const act = actKeys[Math.floor(Math.random() * actKeys.length)];
     const tar = actionMap[act][Math.floor(Math.random() * actionMap[act].length)];
     const cond = conditions[Math.floor(Math.random() * conditions.length)];
 
-    const finalDirective = `The <strong>${sub}</strong> shall <strong>${act}</strong> ${tar} ${cond}.`;
+    const finalDirective = `You shall <strong>${act}</strong> ${tar} ${cond}.`;
     
     // Update main display
     document.getElementById('output').innerHTML = finalDirective;
