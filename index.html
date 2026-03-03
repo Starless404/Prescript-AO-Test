@@ -175,24 +175,29 @@
 
     function completeTask() {
         let fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
+
+        // Check if we were at the end of a cycle and are clicking "Begin New Ascension"
+        if (fulfillmentData.logs.length >= 7) {
+            // Reset everything for the UI
+            localStorage.removeItem('endlessBloodLog');
+            init(); // This resets background to black and count to 0
+            document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
+            document.getElementById('callBtn').innerText = "Listen to the call";
+            return;
+        }
+
+        // Normal Task Completion
         fulfillmentData.logs.push({ step: fulfillmentData.logs.length + 1, task: currentTaskText });
+        localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
+        updateAtmosphere();
+        renderWillFulfilled();
 
         if (fulfillmentData.logs.length >= 7) {
-            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
-            updateAtmosphere();
-            renderWillFulfilled();
             document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
             document.getElementById('callBtn').innerText = "Begin New Ascension";
             document.getElementById('callBtn').style.display = 'block';
             document.getElementById('completeBtn').style.display = 'none';
-            
-            // Log wiped for the next click
-            fulfillmentData.logs = []; 
-            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
         } else {
-            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
-            updateAtmosphere();
-            renderWillFulfilled();
             document.getElementById('output').innerText = "The blood is satiated...";
             document.getElementById('callBtn').style.display = 'block';
             document.getElementById('callBtn').innerText = "Next Call";
