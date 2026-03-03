@@ -1,9 +1,3 @@
-The bug likely persists because the "Ascension" button and the "Listen" button are sharing the same logic pathway, causing the state to get tangled between the end of one cycle and the start of the next.
-
-I have isolated the Ascension Reset into its own clean function. Now, when you finish Step 7, the button explicitly becomes a "Reset" trigger that clears the board and returns the world to black before you can even ask for a new task.
-
-HTML
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,7 +43,6 @@ HTML
         button:disabled { opacity: 0.2; cursor: not-allowed; }
 
         #completeBtn { border-color: #8b0000; color: #ff4d4d; display: none; font-weight: bold; }
-        #resetBtn { border-color: #fff; color: #fff; display: none; font-weight: bold; }
 
         .counter-display { margin-top: 25px; font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; display: flex; justify-content: space-around; width: 100%; }
         
@@ -78,9 +71,8 @@ HTML
     <div id="output">The call is silent. Tap to listen...</div>
     
     <div class="btn-group">
-        <button id="callBtn" onclick="receiveWill()">Listen to the call</button>
+        <button id="callBtn" onclick="handleCall()">Listen to the call</button>
         <button id="completeBtn" onclick="completeTask()">Mark as Executed</button>
-        <button id="resetBtn" onclick="startNewAscension()">Begin New Ascension</button>
     </div>
 
     <div class="counter-display">
@@ -108,11 +100,14 @@ HTML
     function init() {
         const tasksDone = getTaskCount();
         if (tasksDone >= 7) {
-            showAscensionScreen();
+            // Cycle was complete but page refreshed
+            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
+            document.getElementById('callBtn').innerText = "Begin New Cycle";
+            updateAtmosphere(7);
         } else {
             updateAtmosphere(tasksDone);
-            renderWillFulfilled();
         }
+        renderWillFulfilled();
     }
 
     function getTaskCount() {
@@ -124,20 +119,24 @@ HTML
         const intensity = 1 + (step * 0.5);
         let redValue = step * 25; 
         document.body.style.backgroundColor = `rgb(${redValue}, 0, 0)`;
-
         document.getElementById('intensityView').innerText = `Intensity: ${intensity.toFixed(1)}x`;
         document.getElementById('countView').innerText = `Step: ${step}/7`;
-
-        if (step >= 7) {
-            document.getElementById('mainBox').style.borderColor = "#ff0000";
-            document.getElementById('mainBox').style.boxShadow = "0 0 30px rgba(255, 0, 0, 0.7)";
-        } else {
-            document.getElementById('mainBox').style.borderColor = "var(--blood-red)";
-            document.getElementById('mainBox').style.boxShadow = "none";
-        }
     }
 
-    function receiveWill() {
+    function handleCall() {
+        const tasksDone = getTaskCount();
+        
+        // AUTO-RESET LOGIC: If clicking after the 7th task was logged
+        if (tasksDone >= 7) {
+            localStorage.removeItem('endlessBloodLog');
+            updateAtmosphere(0);
+            renderWillFulfilled();
+        }
+
+        generateNewTask();
+    }
+
+    function generateNewTask() {
         const tasksDone = getTaskCount();
         const currentStep = tasksDone + 1; 
         
@@ -185,46 +184,32 @@ HTML
     }
 
     function completeTask() {
-        let fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
-        fulfillmentData.logs.push({ step: fulfillmentData.logs.length + 1, task: currentTaskText });
-        localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
+        let data = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
+        data.logs.push({ step: data.logs.length + 1, task: currentTaskText });
+        localStorage.setItem('endlessBloodLog', JSON.stringify(data));
         
         renderWillFulfilled();
-        
-        if (fulfillmentData.logs.length >= 7) {
-            showAscensionScreen();
+        const totalDone = data.logs.length;
+
+        document.getElementById('completeBtn').style.display = 'none';
+        document.getElementById('callBtn').style.display = 'block';
+
+        if (totalDone >= 7) {
+            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
+            document.getElementById('callBtn').innerText = "Begin New Cycle";
+            updateAtmosphere(7);
         } else {
             document.getElementById('output').innerText = "The blood is satiated...";
-            document.getElementById('callBtn').style.display = 'block';
             document.getElementById('callBtn').innerText = "Next Call";
-            document.getElementById('completeBtn').style.display = 'none';
         }
     }
 
-    function showAscensionScreen() {
-        document.getElementById('output').innerText = "THE SEVENTH WILL IS DONE. THE CYCLE IS COMPLETE.";
-        document.getElementById('callBtn').style.display = 'none';
-        document.getElementById('completeBtn').style.display = 'none';
-        document.getElementById('resetBtn').style.display = 'block';
-        updateAtmosphere(7);
-    }
-
-    function startNewAscension() {
-        localStorage.removeItem('endlessBloodLog');
-        document.getElementById('resetBtn').style.display = 'none';
-        document.getElementById('callBtn').style.display = 'block';
-        document.getElementById('callBtn').innerText = "Listen to the call";
-        document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
-        updateAtmosphere(0);
-        renderWillFulfilled();
-    }
-
     function renderWillFulfilled() {
-        const fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog'));
+        const data = JSON.parse(localStorage.getItem('endlessBloodLog'));
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = "";
-        if (fulfillmentData && fulfillmentData.logs.length > 0) {
-            fulfillmentData.logs.forEach(log => {
+        if (data && data.logs.length > 0) {
+            data.logs.forEach(log => {
                 const item = document.createElement('div');
                 item.className = "history-item";
                 item.innerHTML = `Step ${log.step}: <span>${log.task}</span>`;
@@ -237,4 +222,3 @@ HTML
 </script>
 </body>
 </html>
-
