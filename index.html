@@ -7,6 +7,7 @@
     <style>
         :root {
             --blood-red: #c0c0c0;
+            --history-text: #ffffff; 
             --glow: rgba(255, 255, 255, 0);
         }
 
@@ -16,6 +17,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             min-height: 100vh; margin: 0; padding: 20px;
             transition: background-color 1.2s ease;
+            overflow-x: hidden;
         }
 
         .prescript-box { 
@@ -23,11 +25,12 @@
             width: 450px; text-align: center; 
             box-shadow: 0 0 15px var(--glow); 
             position: relative; transition: all 1.5s ease;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            z-index: 2;
         }
 
         h1 { font-size: 1rem; letter-spacing: 5px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
-        #output { font-size: 1.1rem; margin: 25px 0; min-height: 60px; line-height: 1.5; color: #e0e0e0; }
+        #output { font-size: 1.1rem; margin: 25px 0; min-height: 80px; line-height: 1.5; color: #e0e0e0; }
         
         .btn-group { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
@@ -45,14 +48,18 @@
         
         .history-container {
             width: 450px;
-            border-top: 1px double #333;
-            padding-top: 15px;
-            font-size: 0.8rem;
-            color: #666;
+            background: rgba(0, 0, 0, 0.8); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 0.85rem;
+            color: var(--history-text);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        .history-title { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; color: #888; text-align: center; }
-        .history-item { margin-bottom: 5px; border-left: 2px solid #333; padding-left: 10px; }
-        .history-item span { color: #aaa; }
+        .history-title { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; color: #ff4d4d; text-align: center; font-weight: bold; }
+        .history-item { margin-bottom: 8px; border-left: 2px solid #8b0000; padding: 5px 10px; background: rgba(255,255,255,0.05); }
+        .history-item span { color: #ffffff; text-shadow: 1px 1px 2px #000; }
 
         .intensity-tag { color: #ff4d4d; font-weight: bold; font-size: 0.8rem; }
         strong { color: #fff; }
@@ -76,14 +83,16 @@
 </div>
 
 <div class="history-container" id="historyBox">
-    <div class="history-title">Will Fulfilled</div>
+    <div class="history-title">Execution Log</div>
     <div id="historyList"></div>
 </div>
 
 <script>
     const actionMap = {
         "clear": ["Towers", "Treasure charts", "Sea Charts"],
-        "kill": ["Minibosses", "Story Bosses", "Sea monsters", "Rivals"],
+        "kill": ["Mini Bosses", "Story Bosses", "Rivals"],
+        "hunt": ["Sea Monsters", "Alpha Animals"], 
+        "sink": ["Brigs", "Ketches", "Caravels"],
         "sail in": ["the Bronze Sea", "the Nimbus Sea", "the Dark Sea"]
     };
 
@@ -94,7 +103,6 @@
         renderWillFulfilled();
     }
 
-    // Endless version doesn't care about the date, only the log length
     function getTaskCount() {
         let data = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
         return data.logs.length;
@@ -103,8 +111,7 @@
     function updateAtmosphere() {
         const tasksDone = getTaskCount();
         const intensity = 1 + (tasksDone * 0.5);
-        
-        let redValue = tasksDone * 15; // Faster color ramp for endless mode
+        let redValue = tasksDone * 22; 
         document.body.style.backgroundColor = `rgb(${redValue}, 0, 0)`;
 
         document.getElementById('intensityView').innerText = `Intensity: ${intensity.toFixed(1)}x`;
@@ -112,7 +119,7 @@
 
         if (tasksDone >= 7) {
             document.getElementById('mainBox').style.borderColor = "#ff0000";
-            document.getElementById('mainBox').style.boxShadow = "0 0 20px rgba(255, 0, 0, 0.4)";
+            document.getElementById('mainBox').style.boxShadow = "0 0 30px rgba(255, 0, 0, 0.7)";
         } else {
             document.getElementById('mainBox').style.borderColor = "var(--blood-red)";
             document.getElementById('mainBox').style.boxShadow = "none";
@@ -121,63 +128,82 @@
 
     function receiveWill() {
         const tasksDone = getTaskCount();
+        const currentStep = tasksDone + 1;
         const scale = 1 + (tasksDone * 0.5);
-
-        const actions = Object.keys(actionMap);
-        const selectedAction = actions[Math.floor(Math.random() * actions.length)];
-        const targetList = actionMap[selectedAction];
-        const selectedTarget = targetList[Math.floor(Math.random() * targetList.length)];
-
         const scaledRand = (min, max) => Math.floor((Math.random() * (max - min + 1) + min) * scale);
-        const repAmount = Math.floor((Math.random() * (150 - 50 + 1) + 50) * scale);
 
-        const conditionPool = [
-            `${scaledRand(3, 6)} times`,
-            `${scaledRand(2, 4)} times without dying`,
-            `until you earn ${repAmount} reputation`,
-            `for exactly ${scaledRand(1, 2)} hours`
-        ];
-        const selectedCondition = conditionPool[Math.floor(Math.random() * conditionPool.length)];
+        const categories = Object.keys(actionMap);
+        const selectedAction = categories[Math.floor(Math.random() * categories.length)];
+        let targetList = [...actionMap[selectedAction]];
 
-        currentTaskText = `${selectedAction} ${selectedTarget} ${selectedCondition}`;
+        if (selectedAction === "hunt" && currentStep >= 4) {
+            targetList.push("Dark Sea Animals");
+        }
+
+        const selectedTarget = targetList[Math.floor(Math.random() * targetList.length)];
+        let condition = "";
+
+        if (selectedAction === "hunt" || selectedAction === "sink") {
+            if (Math.random() > 0.5) {
+                const repAmount = Math.floor((Math.random() * (150 - 50 + 1) + 50) * scale);
+                condition = `until you earn ${repAmount} reputation`;
+            } else {
+                const min = selectedAction === "sink" ? 4 : 8;
+                const max = selectedAction === "sink" ? 8 : 15;
+                condition = `${scaledRand(min, max)} times`;
+            }
+        } 
+        else if (selectedAction === "kill") {
+            if (Math.random() > 0.6) {
+                condition = `${scaledRand(1, 2)} times without dying`;
+            } else {
+                condition = `${scaledRand(3, 6)} times`;
+            }
+        }
+        else if (selectedAction === "sail in") {
+            condition = `for exactly ${scaledRand(1, 2)} hours`;
+        }
+        else {
+            condition = `${scaledRand(3, 6)} times`;
+        }
+
+        currentTaskText = `${selectedAction} ${selectedTarget} ${condition}`;
         document.getElementById('output').innerHTML = `<span class="intensity-tag">[INTENSITY ${scale.toFixed(1)}x]</span><br>You must <strong>${currentTaskText}</strong>.`;
-        
         document.getElementById('callBtn').style.display = 'none';
         document.getElementById('completeBtn').style.display = 'block';
     }
 
     function completeTask() {
         let fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
+        fulfillmentData.logs.push({ step: fulfillmentData.logs.length + 1, task: currentTaskText });
 
-        fulfillmentData.logs.push({
-            step: fulfillmentData.logs.length + 1,
-            task: currentTaskText
-        });
-
-        // Handle Cycle Completion (If they finish 7, you could reset or keep going)
-        // For now, we allow them to finish 7, then the next click resets.
-        if (fulfillmentData.logs.length > 7) {
-            fulfillmentData.logs = []; // Reset cycle
-            document.getElementById('output').innerText = "A new cycle begins...";
+        if (fulfillmentData.logs.length >= 7) {
+            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
+            updateAtmosphere();
+            renderWillFulfilled();
+            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
+            document.getElementById('callBtn').innerText = "Begin New Ascension";
+            document.getElementById('callBtn').style.display = 'block';
+            document.getElementById('completeBtn').style.display = 'none';
+            
+            // Log wiped for the next click
+            fulfillmentData.logs = []; 
+            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
         } else {
-            document.getElementById('output').innerText = "The blood is satiated... for now.";
+            localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
+            updateAtmosphere();
+            renderWillFulfilled();
+            document.getElementById('output').innerText = "The blood is satiated...";
+            document.getElementById('callBtn').style.display = 'block';
+            document.getElementById('callBtn').innerText = "Next Call";
+            document.getElementById('completeBtn').style.display = 'none';
         }
-
-        localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
-        
-        updateAtmosphere();
-        renderWillFulfilled();
-        
-        document.getElementById('callBtn').style.display = 'block';
-        document.getElementById('callBtn').innerText = "Listen to the next call";
-        document.getElementById('completeBtn').style.display = 'none';
     }
 
     function renderWillFulfilled() {
         const fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog'));
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = "";
-
         if (fulfillmentData && fulfillmentData.logs.length > 0) {
             fulfillmentData.logs.forEach(log => {
                 const item = document.createElement('div');
@@ -186,7 +212,7 @@
                 listDiv.appendChild(item);
             });
         } else {
-            listDiv.innerHTML = "<div style='text-align:center; opacity:0.3;'>No current progress.</div>";
+            listDiv.innerHTML = "<div style='text-align:center; opacity:0.3; color:#888;'>No current progress.</div>";
         }
     }
 </script>
