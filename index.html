@@ -77,7 +77,7 @@
     </div>
 
     <div class="counter-display">
-        <span id="countView">Step: --/7</span>
+        <span id="countView">Step: 0/7</span>
         <span id="intensityView">Intensity: 1.0x</span>
     </div>
 </div>
@@ -99,7 +99,7 @@
     let currentTaskText = ""; 
 
     function init() {
-        updateAtmosphere();
+        updateAtmosphere(0); 
         renderWillFulfilled();
     }
 
@@ -108,16 +108,19 @@
         return data.logs.length;
     }
 
-    function updateAtmosphere() {
+    function updateAtmosphere(activeStep) {
         const tasksDone = getTaskCount();
-        const intensity = 1 + (tasksDone * 0.5);
-        let redValue = tasksDone * 22; 
+        // If we haven't clicked 'Listen' yet, we show the intensity of the NEXT step
+        const displayStep = activeStep > 0 ? activeStep : tasksDone;
+        const intensity = 1 + (displayStep * 0.5);
+        
+        let redValue = displayStep * 25; 
         document.body.style.backgroundColor = `rgb(${redValue}, 0, 0)`;
 
         document.getElementById('intensityView').innerText = `Intensity: ${intensity.toFixed(1)}x`;
-        document.getElementById('countView').innerText = `Step: ${tasksDone}/7`;
+        document.getElementById('countView').innerText = `Step: ${displayStep}/7`;
 
-        if (tasksDone >= 7) {
+        if (displayStep >= 7) {
             document.getElementById('mainBox').style.borderColor = "#ff0000";
             document.getElementById('mainBox').style.boxShadow = "0 0 30px rgba(255, 0, 0, 0.7)";
         } else {
@@ -128,7 +131,19 @@
 
     function receiveWill() {
         const tasksDone = getTaskCount();
-        const currentStep = tasksDone + 1;
+        
+        // If cycle was finished and user clicks "Begin New Ascension"
+        if (tasksDone >= 7) {
+            localStorage.removeItem('endlessBloodLog');
+            init();
+            document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
+            document.getElementById('callBtn').innerText = "Listen to the call";
+            return;
+        }
+
+        const currentStep = tasksDone + 1; // Start at 1
+        updateAtmosphere(currentStep); // Update color to match the current active task
+
         const scale = 1 + (tasksDone * 0.5);
         const scaledRand = (min, max) => Math.floor((Math.random() * (max - min + 1) + min) * scale);
 
@@ -168,7 +183,7 @@
         }
 
         currentTaskText = `${selectedAction} ${selectedTarget} ${condition}`;
-        document.getElementById('output').innerHTML = `<span class="intensity-tag">[INTENSITY ${scale.toFixed(1)}x]</span><br>You must <strong>${currentTaskText}</strong>.`;
+        document.getElementById('output').innerHTML = `<span class="intensity-tag">[STEP ${currentStep}] [${scale.toFixed(1)}x]</span><br>You must <strong>${currentTaskText}</strong>.`;
         document.getElementById('callBtn').style.display = 'none';
         document.getElementById('completeBtn').style.display = 'block';
     }
@@ -176,24 +191,14 @@
     function completeTask() {
         let fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
 
-        // Check if we were at the end of a cycle and are clicking "Begin New Ascension"
-        if (fulfillmentData.logs.length >= 7) {
-            // Reset everything for the UI
-            localStorage.removeItem('endlessBloodLog');
-            init(); // This resets background to black and count to 0
-            document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
-            document.getElementById('callBtn').innerText = "Listen to the call";
-            return;
-        }
-
-        // Normal Task Completion
         fulfillmentData.logs.push({ step: fulfillmentData.logs.length + 1, task: currentTaskText });
         localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
-        updateAtmosphere();
+        
         renderWillFulfilled();
+        const totalDone = fulfillmentData.logs.length;
 
-        if (fulfillmentData.logs.length >= 7) {
-            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
+        if (totalDone >= 7) {
+            document.getElementById('output').innerText = "THE SEVENTH WILL IS DONE. THE CYCLE IS COMPLETE.";
             document.getElementById('callBtn').innerText = "Begin New Ascension";
             document.getElementById('callBtn').style.display = 'block';
             document.getElementById('completeBtn').style.display = 'none';
