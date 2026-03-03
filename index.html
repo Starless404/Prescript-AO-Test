@@ -1,3 +1,9 @@
+The bug likely persists because the "Ascension" button and the "Listen" button are sharing the same logic pathway, causing the state to get tangled between the end of one cycle and the start of the next.
+
+I have isolated the Ascension Reset into its own clean function. Now, when you finish Step 7, the button explicitly becomes a "Reset" trigger that clears the board and returns the world to black before you can even ask for a new task.
+
+HTML
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,6 +49,7 @@
         button:disabled { opacity: 0.2; cursor: not-allowed; }
 
         #completeBtn { border-color: #8b0000; color: #ff4d4d; display: none; font-weight: bold; }
+        #resetBtn { border-color: #fff; color: #fff; display: none; font-weight: bold; }
 
         .counter-display { margin-top: 25px; font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; display: flex; justify-content: space-around; width: 100%; }
         
@@ -55,11 +62,10 @@
             font-size: 0.85rem;
             color: var(--history-text);
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .history-title { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; color: #ff4d4d; text-align: center; font-weight: bold; }
         .history-item { margin-bottom: 8px; border-left: 2px solid #8b0000; padding: 5px 10px; background: rgba(255,255,255,0.05); }
-        .history-item span { color: #ffffff; text-shadow: 1px 1px 2px #000; }
+        .history-item span { color: #ffffff; }
 
         .intensity-tag { color: #ff4d4d; font-weight: bold; font-size: 0.8rem; }
         strong { color: #fff; }
@@ -74,6 +80,7 @@
     <div class="btn-group">
         <button id="callBtn" onclick="receiveWill()">Listen to the call</button>
         <button id="completeBtn" onclick="completeTask()">Mark as Executed</button>
+        <button id="resetBtn" onclick="startNewAscension()">Begin New Ascension</button>
     </div>
 
     <div class="counter-display">
@@ -99,8 +106,13 @@
     let currentTaskText = ""; 
 
     function init() {
-        updateAtmosphere(0); 
-        renderWillFulfilled();
+        const tasksDone = getTaskCount();
+        if (tasksDone >= 7) {
+            showAscensionScreen();
+        } else {
+            updateAtmosphere(tasksDone);
+            renderWillFulfilled();
+        }
     }
 
     function getTaskCount() {
@@ -108,19 +120,15 @@
         return data.logs.length;
     }
 
-    function updateAtmosphere(activeStep) {
-        const tasksDone = getTaskCount();
-        // If we haven't clicked 'Listen' yet, we show the intensity of the NEXT step
-        const displayStep = activeStep > 0 ? activeStep : tasksDone;
-        const intensity = 1 + (displayStep * 0.5);
-        
-        let redValue = displayStep * 25; 
+    function updateAtmosphere(step) {
+        const intensity = 1 + (step * 0.5);
+        let redValue = step * 25; 
         document.body.style.backgroundColor = `rgb(${redValue}, 0, 0)`;
 
         document.getElementById('intensityView').innerText = `Intensity: ${intensity.toFixed(1)}x`;
-        document.getElementById('countView').innerText = `Step: ${displayStep}/7`;
+        document.getElementById('countView').innerText = `Step: ${step}/7`;
 
-        if (displayStep >= 7) {
+        if (step >= 7) {
             document.getElementById('mainBox').style.borderColor = "#ff0000";
             document.getElementById('mainBox').style.boxShadow = "0 0 30px rgba(255, 0, 0, 0.7)";
         } else {
@@ -131,18 +139,9 @@
 
     function receiveWill() {
         const tasksDone = getTaskCount();
+        const currentStep = tasksDone + 1; 
         
-        // If cycle was finished and user clicks "Begin New Ascension"
-        if (tasksDone >= 7) {
-            localStorage.removeItem('endlessBloodLog');
-            init();
-            document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
-            document.getElementById('callBtn').innerText = "Listen to the call";
-            return;
-        }
-
-        const currentStep = tasksDone + 1; // Start at 1
-        updateAtmosphere(currentStep); // Update color to match the current active task
+        updateAtmosphere(currentStep);
 
         const scale = 1 + (tasksDone * 0.5);
         const scaledRand = (min, max) => Math.floor((Math.random() * (max - min + 1) + min) * scale);
@@ -169,11 +168,7 @@
             }
         } 
         else if (selectedAction === "kill") {
-            if (Math.random() > 0.6) {
-                condition = `${scaledRand(1, 2)} times without dying`;
-            } else {
-                condition = `${scaledRand(3, 6)} times`;
-            }
+            condition = Math.random() > 0.6 ? `${scaledRand(1, 2)} times without dying` : `${scaledRand(3, 6)} times`;
         }
         else if (selectedAction === "sail in") {
             condition = `for exactly ${scaledRand(1, 2)} hours`;
@@ -183,31 +178,45 @@
         }
 
         currentTaskText = `${selectedAction} ${selectedTarget} ${condition}`;
-        document.getElementById('output').innerHTML = `<span class="intensity-tag">[STEP ${currentStep}] [${scale.toFixed(1)}x]</span><br>You must <strong>${currentTaskText}</strong>.`;
+        document.getElementById('output').innerHTML = `<span class="intensity-tag">[STEP ${currentStep}]</span><br>You must <strong>${currentTaskText}</strong>.`;
+        
         document.getElementById('callBtn').style.display = 'none';
         document.getElementById('completeBtn').style.display = 'block';
     }
 
     function completeTask() {
         let fulfillmentData = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
-
         fulfillmentData.logs.push({ step: fulfillmentData.logs.length + 1, task: currentTaskText });
         localStorage.setItem('endlessBloodLog', JSON.stringify(fulfillmentData));
         
         renderWillFulfilled();
-        const totalDone = fulfillmentData.logs.length;
-
-        if (totalDone >= 7) {
-            document.getElementById('output').innerText = "THE SEVENTH WILL IS DONE. THE CYCLE IS COMPLETE.";
-            document.getElementById('callBtn').innerText = "Begin New Ascension";
-            document.getElementById('callBtn').style.display = 'block';
-            document.getElementById('completeBtn').style.display = 'none';
+        
+        if (fulfillmentData.logs.length >= 7) {
+            showAscensionScreen();
         } else {
             document.getElementById('output').innerText = "The blood is satiated...";
             document.getElementById('callBtn').style.display = 'block';
             document.getElementById('callBtn').innerText = "Next Call";
             document.getElementById('completeBtn').style.display = 'none';
         }
+    }
+
+    function showAscensionScreen() {
+        document.getElementById('output').innerText = "THE SEVENTH WILL IS DONE. THE CYCLE IS COMPLETE.";
+        document.getElementById('callBtn').style.display = 'none';
+        document.getElementById('completeBtn').style.display = 'none';
+        document.getElementById('resetBtn').style.display = 'block';
+        updateAtmosphere(7);
+    }
+
+    function startNewAscension() {
+        localStorage.removeItem('endlessBloodLog');
+        document.getElementById('resetBtn').style.display = 'none';
+        document.getElementById('callBtn').style.display = 'block';
+        document.getElementById('callBtn').innerText = "Listen to the call";
+        document.getElementById('output').innerText = "The cycle has been reborn. Listen...";
+        updateAtmosphere(0);
+        renderWillFulfilled();
     }
 
     function renderWillFulfilled() {
@@ -222,10 +231,10 @@
                 listDiv.appendChild(item);
             });
         } else {
-            listDiv.innerHTML = "<div style='text-align:center; opacity:0.3; color:#888;'>No current progress.</div>";
+            listDiv.innerHTML = "<div style='text-align:center; opacity:0.3;'>No current progress.</div>";
         }
     }
 </script>
-
 </body>
 </html>
+
