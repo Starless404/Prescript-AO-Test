@@ -3,221 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Urge of Blood: Endless</title>
+    <title>The Path of Purity</title>
     <style>
-        :root {
-            --blood-red: #c0c0c0;
-            --history-text: #ffffff; 
-            --glow: rgba(255, 255, 255, 0);
+        :root { 
+            --gold: #d4af37; 
+            --bright-gold: #ffdf00;
+            --pure-white: #ffffff;
         }
-
         body { 
-            background-color: #000000; color: var(--blood-red); 
-            font-family: 'Courier New', monospace; 
+            background-color: #000; color: var(--gold); 
+            font-family: 'Garamond', serif; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             min-height: 100vh; margin: 0; padding: 20px;
-            transition: background-color 1.2s ease;
-            overflow-x: hidden;
+            transition: background-color 2s ease; overflow-x: hidden;
         }
-
-        .prescript-box { 
-            border: 1px solid var(--blood-red); padding: 30px; background: #111; 
+        .purity-box { 
+            border: 1px solid var(--gold); padding: 40px; background: rgba(10, 10, 10, 0.95); 
             width: 450px; text-align: center; 
-            box-shadow: 0 0 15px var(--glow); 
-            position: relative; transition: all 1.5s ease;
-            margin-bottom: 25px;
-            z-index: 2;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.05); 
+            position: relative;
+            transition: border-width 0.5s ease;
         }
-
-        h1 { font-size: 1rem; letter-spacing: 5px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; }
-        #output { font-size: 1.1rem; margin: 25px 0; min-height: 80px; line-height: 1.5; color: #e0e0e0; }
+        h1 { font-size: 1.1rem; letter-spacing: 10px; color: var(--pure-white); border-bottom: 1px solid #222; padding-bottom: 15px; margin-top: 0; text-transform: uppercase; }
+        #output { font-size: 1.2rem; margin: 30px 0; min-height: 90px; color: var(--pure-white); line-height: 1.7; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-
+        .btn-group { display: flex; flex-direction: column; gap: 15px; align-items: center; }
         button { 
-            background: #111; color: var(--blood-red); border: 1px solid var(--blood-red); 
-            padding: 10px 25px; cursor: pointer; text-transform: uppercase; transition: 0.5s; 
-            width: 80%;
+            background: #000; color: var(--gold); border: 1px solid var(--gold); 
+            padding: 15px 30px; cursor: pointer; text-transform: uppercase; width: 100%; 
+            transition: 0.5s; letter-spacing: 3px; font-weight: bold;
         }
-        button:hover:not(:disabled) { color: #fff; border-color: #fff; background: #1a1a1a; }
-        button:disabled { opacity: 0.2; cursor: not-allowed; }
-
-        #completeBtn { border-color: #8b0000; color: #ff4d4d; display: none; font-weight: bold; }
-
-        .counter-display { margin-top: 25px; font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; display: flex; justify-content: space-around; width: 100%; }
+        button:hover { color: #fff; border-color: var(--pure-white); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
         
-        .history-container {
-            width: 450px;
-            background: rgba(0, 0, 0, 0.8); 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            padding: 15px;
-            font-size: 0.85rem;
-            color: var(--history-text);
-            backdrop-filter: blur(8px);
-        }
-        .history-title { text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; color: #ff4d4d; text-align: center; font-weight: bold; }
-        .history-item { margin-bottom: 8px; border-left: 2px solid #8b0000; padding: 5px 10px; background: rgba(255,255,255,0.05); }
-        .history-item span { color: #ffffff; }
+        .stats-display { margin-top: 30px; font-size: 0.75rem; opacity: 0.9; letter-spacing: 2px; display: flex; flex-direction: column; gap: 12px; width: 100%; border-top: 1px solid #1a1a1a; padding-top: 25px; }
+        .cycle-count { color: var(--bright-gold); font-size: 0.9rem; font-weight: bold; }
 
-        .intensity-tag { color: #ff4d4d; font-weight: bold; font-size: 0.8rem; }
-        strong { color: #fff; }
+        .history-container {
+            width: 450px; background: rgba(0, 0, 0, 0.5); border: 1px solid #111;
+            margin-top: 25px; padding: 15px; font-size: 0.85rem; color: #999;
+        }
+        .history-title { text-transform: uppercase; letter-spacing: 4px; margin-bottom: 15px; color: var(--gold); text-align: center; font-size: 0.7rem; }
+        .history-item { margin-bottom: 8px; border-left: 1px solid var(--gold); padding: 5px 15px; }
+        .history-item span { color: var(--pure-white); }
+        
+        strong { color: var(--bright-gold); }
     </style>
 </head>
 <body onload="init()">
 
-<div class="prescript-box" id="mainBox">
-    <h1>【 Blood Will 】</h1>
-    <div id="output">The call is silent. Tap to listen...</div>
-    
-    <div class="btn-group">
-        <button id="callBtn" onclick="handleCall()">Listen to the call</button>
-        <button id="completeBtn" onclick="completeTask()">Mark as Executed</button>
+<div class="purity-box" id="mainBox">
+    <h1>【 Purity 】</h1>
+    <div id="output">The Path is clear...</div>
+    <div class="btn-group" id="btnArea">
+        <button id="mainBtn" onclick="generateRefinement()">Receive Instruction</button>
     </div>
 
-    <div class="counter-display">
-        <span id="countView">Step: 0/7</span>
-        <span id="intensityView">Intensity: 1.0x</span>
+    <div class="stats-display">
+        <span id="stepView">VESSEL PROGRESS: 0 / 7</span>
+        <span class="cycle-count" id="cycleView">PURIFICATIONS COMPLETED: 0</span>
     </div>
 </div>
 
 <div class="history-container" id="historyBox">
-    <div class="history-title">Execution Log</div>
+    <div class="history-title">Chronicle of Refinement</div>
     <div id="historyList"></div>
 </div>
 
 <script>
     const actionMap = {
-        "clear": ["Towers", "Treasure charts", "Sea Charts"],
-        "kill": ["Mini Bosses", "Story Bosses", "Rivals"],
-        "hunt": ["Sea Monsters", "Alpha Animals"], 
-        "sink": ["Brigs", "Ketches", "Caravels"],
-        "sail in": ["the Bronze Sea", "the Nimbus Sea", "the Dark Sea"]
+        "Cleanse": ["Corruption from Atlanteans", "Pirate Ships", "Bosses' Hatred"],
+        "Restore": ["Treasure Charts", "Sea Charts", "Relics"],
+        "Survive": ["In the Dark Sea", "In the Nimbus Sea", "In the Bronze Sea"],
+        "Secure": ["Forts", "Unclaimed Islands", "Castaways"]
     };
 
-    let currentTaskText = ""; 
-
     function init() {
-        const tasksDone = getTaskCount();
-        if (tasksDone >= 7) {
-            // Cycle was complete but page refreshed
-            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
-            document.getElementById('callBtn').innerText = "Begin New Cycle";
-            updateAtmosphere(7);
-        } else {
-            updateAtmosphere(tasksDone);
-        }
-        renderWillFulfilled();
+        const data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        updateUI(data);
     }
 
-    function getTaskCount() {
-        let data = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
-        return data.logs.length;
-    }
+    function updateUI(data) {
+        const step = data.logs.length;
+        const cycles = data.cycles || 0;
 
-    function updateAtmosphere(step) {
-        const intensity = 1 + (step * 0.5);
-        let redValue = step * 25; 
-        document.body.style.backgroundColor = `rgb(${redValue}, 0, 0)`;
-        document.getElementById('intensityView').innerText = `Intensity: ${intensity.toFixed(1)}x`;
-        document.getElementById('countView').innerText = `Step: ${step}/7`;
-    }
-
-    function handleCall() {
-        const tasksDone = getTaskCount();
+        const intensity = step / 7;
+        document.body.style.backgroundColor = `rgb(${Math.floor(45 * intensity)}, ${Math.floor(40 * intensity)}, 10)`;
         
-        // AUTO-RESET LOGIC: If clicking after the 7th task was logged
-        if (tasksDone >= 7) {
-            localStorage.removeItem('endlessBloodLog');
-            updateAtmosphere(0);
-            renderWillFulfilled();
-        }
+        // Visual border reinforcement
+        document.getElementById('mainBox').style.borderWidth = `${1 + (step * 0.5)}px`;
 
-        generateNewTask();
+        document.getElementById('stepView').innerText = `VESSEL PROGRESS: ${step} / 7`;
+        document.getElementById('cycleView').innerText = `PURIFICATIONS COMPLETED: ${cycles}`;
+        
+        renderLog(data.logs);
     }
 
-    function generateNewTask() {
-        const tasksDone = getTaskCount();
-        const currentStep = tasksDone + 1; 
+    function generateRefinement() {
+        const data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        const step = data.logs.length + 1;
         
-        updateAtmosphere(currentStep);
-
-        const scale = 1 + (tasksDone * 0.5);
-        const scaledRand = (min, max) => Math.floor((Math.random() * (max - min + 1) + min) * scale);
-
         const categories = Object.keys(actionMap);
-        const selectedAction = categories[Math.floor(Math.random() * categories.length)];
-        let targetList = [...actionMap[selectedAction]];
-
-        if (selectedAction === "hunt" && currentStep >= 4) {
-            targetList.push("Dark Sea Animals");
-        }
-
-        const selectedTarget = targetList[Math.floor(Math.random() * targetList.length)];
-        let condition = "";
-
-        if (selectedAction === "hunt" || selectedAction === "sink") {
-            if (Math.random() > 0.5) {
-                const repAmount = Math.floor((Math.random() * (150 - 50 + 1) + 50) * scale);
-                condition = `until you earn ${repAmount} reputation`;
-            } else {
-                const min = selectedAction === "sink" ? 4 : 8;
-                const max = selectedAction === "sink" ? 8 : 15;
-                condition = `${scaledRand(min, max)} times`;
-            }
-        } 
-        else if (selectedAction === "kill") {
-            condition = Math.random() > 0.6 ? `${scaledRand(1, 2)} times without dying` : `${scaledRand(3, 6)} times`;
-        }
-        else if (selectedAction === "sail in") {
-            condition = `for exactly ${scaledRand(1, 2)} hours`;
-        }
-        else {
-            condition = `${scaledRand(3, 6)} times`;
-        }
-
-        currentTaskText = `${selectedAction} ${selectedTarget} ${condition}`;
-        document.getElementById('output').innerHTML = `<span class="intensity-tag">[STEP ${currentStep}]</span><br>You must <strong>${currentTaskText}</strong>.`;
+        const action = categories[Math.floor(Math.random() * categories.length)];
+        const target = actionMap[action][Math.floor(Math.random() * actionMap[action].length)];
         
-        document.getElementById('callBtn').style.display = 'none';
-        document.getElementById('completeBtn').style.display = 'block';
+        const multiplier = 1 + (data.cycles * 0.2) + (step * 0.1);
+        let amount = Math.floor((Math.random() * 3 + 2) * multiplier);
+        
+        let taskText = "";
+
+        // Context-aware grammar
+        if (action === "Restore" && target === "Relics") {
+            taskText = `Collect ${amount} Relics for Restoration`;
+        } else if (action === "Restore" && target.includes("Charts")) {
+            taskText = `Fully complete ${amount} ${target}`;
+        } else if (action === "Survive") {
+            taskText = `Survive ${amount} minutes ${target}`;
+        } else if (action === "Cleanse") {
+            taskText = `Cleanse ${amount} ${target}`;
+        } else {
+            taskText = `Secure ${amount} ${target}`;
+        }
+
+        document.getElementById('output').innerHTML = `Instruction ${step}:<br><strong>${taskText}</strong>`;
+        document.getElementById('btnArea').innerHTML = `<button onclick="completeRefinement('${taskText}')">Refine</button>`;
     }
 
-    function completeTask() {
-        let data = JSON.parse(localStorage.getItem('endlessBloodLog')) || { logs: [] };
-        data.logs.push({ step: data.logs.length + 1, task: currentTaskText });
-        localStorage.setItem('endlessBloodLog', JSON.stringify(data));
-        
-        renderWillFulfilled();
-        const totalDone = data.logs.length;
+    function completeRefinement(taskText) {
+        let data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        data.logs.push(taskText);
 
-        document.getElementById('completeBtn').style.display = 'none';
-        document.getElementById('callBtn').style.display = 'block';
-
-        if (totalDone >= 7) {
-            document.getElementById('output').innerText = "THE CYCLE IS COMPLETE.";
-            document.getElementById('callBtn').innerText = "Begin New Cycle";
-            updateAtmosphere(7);
+        if (data.logs.length >= 7) {
+            data.cycles = (data.cycles || 0) + 1;
+            data.logs = []; 
+            document.getElementById('output').innerText = "Vessel Purified. The cycle begins anew.";
         } else {
-            document.getElementById('output').innerText = "The blood is satiated...";
-            document.getElementById('callBtn').innerText = "Next Call";
+            document.getElementById('output').innerText = "The instruction has been observed.";
         }
+
+        localStorage.setItem('purityPathData', JSON.stringify(data));
+        document.getElementById('btnArea').innerHTML = `<button onclick="generateRefinement()">Receive Instruction</button>`;
+        updateUI(data);
     }
 
-    function renderWillFulfilled() {
-        const data = JSON.parse(localStorage.getItem('endlessBloodLog'));
-        const listDiv = document.getElementById('historyList');
-        listDiv.innerHTML = "";
-        if (data && data.logs.length > 0) {
-            data.logs.forEach(log => {
-                const item = document.createElement('div');
-                item.className = "history-item";
-                item.innerHTML = `Step ${log.step}: <span>${log.task}</span>`;
-                listDiv.appendChild(item);
-            });
-        } else {
-            listDiv.innerHTML = "<div style='text-align:center; opacity:0.3;'>No current progress.</div>";
+    function renderLog(logs) {
+        const list = document.getElementById('historyList');
+        if (logs.length === 0) {
+            list.innerHTML = "<div style='text-align:center; opacity:0.3;'>The chronicle is blank.</div>";
+            return;
         }
+        list.innerHTML = logs.map((task, i) => `<div class="history-item">Step ${i+1}: <span>${task}</span></div>`).join('');
     }
 </script>
 </body>
