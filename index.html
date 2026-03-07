@@ -1,3 +1,11 @@
+The issue is likely a variable desync. When you click "Begin New Purification," the script updates the localStorage, but the button logic for the next task might still be trying to reference the old data state or is getting "stuck" between the reset and the new generation.
+
+I have refactored the startNewCycle and completeRefinement functions to use a clean state transition. Instead of just changing the text, the "Begin New Purification" button now fully triggers a fresh initialization.
+
+I also added a window.scrollTo command so that when you start a new cycle, the view focuses back on the Instruction box, ensuring everything feels snappy.
+
+HTML
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,7 +43,7 @@
         }
         button:hover { color: #fff; border-color: var(--pure-white); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
         
-        #resetBtn { border-color: var(--bright-gold); color: var(--bright-gold); margin-top: 10px; }
+        #resetBtn { border-color: var(--bright-gold); color: var(--bright-gold); }
         #resetBtn:hover { background: var(--gold); color: #000; }
 
         .stats-display { margin-top: 30px; font-size: 0.75rem; opacity: 0.9; letter-spacing: 2px; display: flex; flex-direction: column; gap: 12px; width: 100%; border-top: 1px solid #1a1a1a; padding-top: 25px; }
@@ -56,10 +64,9 @@
 
 <div class="purity-box" id="mainBox">
     <h1>【 Purity 】</h1>
-    <div id="output">The Path is clear...</div>
+    <div id="output">Initialising Path...</div>
     <div class="btn-group" id="btnArea">
-        <button id="mainBtn" onclick="generateRefinement()">Receive Instruction</button>
-    </div>
+        </div>
 
     <div class="stats-display">
         <span id="stepView">VESSEL PROGRESS: 0 / 7</span>
@@ -80,12 +87,19 @@
         "Secure": ["Forts", "Unclaimed Islands", "Castaways"]
     };
 
+    function getData() {
+        return JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+    }
+
     function init() {
-        const data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        const data = getData();
+        const step = data.logs.length;
         
-        // If they left the page after the 7th task but before resetting
-        if (data.logs.length === 7) {
+        if (step >= 7) {
             showCycleCompleteUI();
+        } else if (step === 0 && !document.getElementById('taskOutput')) {
+            document.getElementById('output').innerText = "The Path is clear...";
+            document.getElementById('btnArea').innerHTML = `<button onclick="generateRefinement()">Receive Instruction</button>`;
         }
         
         updateUI(data);
@@ -94,7 +108,7 @@
     function updateUI(data) {
         const step = data.logs.length;
         const cycles = data.cycles || 0;
-        const intensity = step / 7;
+        const intensity = Math.min(step / 7, 1);
         
         document.body.style.backgroundColor = `rgb(${Math.floor(45 * intensity)}, ${Math.floor(40 * intensity)}, 10)`;
         document.getElementById('mainBox').style.borderWidth = `${1 + (step * 0.5)}px`;
@@ -104,7 +118,7 @@
     }
 
     function generateRefinement() {
-        const data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        const data = getData();
         const step = data.logs.length + 1;
         
         const categories = Object.keys(actionMap);
@@ -135,12 +149,14 @@
             taskText = `${action} ${amount} ${target}`;
         }
 
-        document.getElementById('output').innerHTML = `Instruction ${step}:<br><strong>${taskText}</strong>`;
-        document.getElementById('btnArea').innerHTML = `<button onclick="completeRefinement('${taskText}')">Refine</button>`;
+        document.getElementById('output').innerHTML = `Instruction ${step}:<br><strong id="taskOutput">${taskText}</strong>`;
+        document.getElementById('btnArea').innerHTML = `<button onclick="completeRefinement()">Refine</button>`;
     }
 
-    function completeRefinement(taskText) {
-        let data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+    function completeRefinement() {
+        const taskText = document.getElementById('taskOutput').innerText;
+        let data = getData();
+        
         data.logs.push(taskText);
         localStorage.setItem('purityPathData', JSON.stringify(data));
 
@@ -159,13 +175,15 @@
     }
 
     function startNewCycle() {
-        let data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        let data = getData();
         data.cycles = (data.cycles || 0) + 1;
         data.logs = []; 
         localStorage.setItem('purityPathData', JSON.stringify(data));
         
+        // Hard reset of the UI state to prevent button "sticking"
         document.getElementById('output').innerText = "A new Path opens before you.";
-        document.getElementById('btnArea').innerHTML = `<button id="mainBtn" onclick="generateRefinement()">Receive Instruction</button>`;
+        document.getElementById('btnArea').innerHTML = `<button onclick="generateRefinement()">Receive Instruction</button>`;
+        window.scrollTo(0, 0);
         updateUI(data);
     }
 
