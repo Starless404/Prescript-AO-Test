@@ -35,6 +35,9 @@
         }
         button:hover { color: #fff; border-color: var(--pure-white); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
         
+        #resetBtn { border-color: var(--bright-gold); color: var(--bright-gold); margin-top: 10px; }
+        #resetBtn:hover { background: var(--gold); color: #000; }
+
         .stats-display { margin-top: 30px; font-size: 0.75rem; opacity: 0.9; letter-spacing: 2px; display: flex; flex-direction: column; gap: 12px; width: 100%; border-top: 1px solid #1a1a1a; padding-top: 25px; }
         .cycle-count { color: var(--bright-gold); font-size: 0.9rem; font-weight: bold; }
 
@@ -65,7 +68,7 @@
 </div>
 
 <div class="history-container" id="historyBox">
-    <div class="history-title">Chronicle of Refinement</div>
+    <div class="history-title">Achieved Deeds</div>
     <div id="historyList"></div>
 </div>
 
@@ -79,22 +82,24 @@
 
     function init() {
         const data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        
+        // If they left the page after the 7th task but before resetting
+        if (data.logs.length === 7) {
+            showCycleCompleteUI();
+        }
+        
         updateUI(data);
     }
 
     function updateUI(data) {
         const step = data.logs.length;
         const cycles = data.cycles || 0;
-
         const intensity = step / 7;
-        document.body.style.backgroundColor = `rgb(${Math.floor(45 * intensity)}, ${Math.floor(40 * intensity)}, 10)`;
         
-        // Visual border reinforcement
+        document.body.style.backgroundColor = `rgb(${Math.floor(45 * intensity)}, ${Math.floor(40 * intensity)}, 10)`;
         document.getElementById('mainBox').style.borderWidth = `${1 + (step * 0.5)}px`;
-
         document.getElementById('stepView').innerText = `VESSEL PROGRESS: ${step} / 7`;
         document.getElementById('cycleView').innerText = `PURIFICATIONS COMPLETED: ${cycles}`;
-        
         renderLog(data.logs);
     }
 
@@ -106,22 +111,28 @@
         const action = categories[Math.floor(Math.random() * categories.length)];
         const target = actionMap[action][Math.floor(Math.random() * actionMap[action].length)];
         
-        const multiplier = 1 + (data.cycles * 0.2) + (step * 0.1);
-        let amount = Math.floor((Math.random() * 3 + 2) * multiplier);
-        
+        const multiplier = 1 + (data.cycles * 0.15) + (step * 0.05);
         let taskText = "";
 
-        // Context-aware grammar
-        if (action === "Restore" && target === "Relics") {
+        if (action === "Survive") {
+            let mins = Math.floor((20 + Math.random() * 20) * multiplier);
+            taskText = `Survive ${mins} minutes ${target}`;
+        } 
+        else if (target === "Unclaimed Islands") {
+            let hours = Math.floor((2 + Math.random() * 2) * (1 + (data.cycles * 0.1)));
+            taskText = `Secure Unclaimed Islands for ${hours} hours`;
+        } 
+        else if (action === "Restore" && target === "Relics") {
+            let amount = Math.floor((3 + Math.random() * 4) * multiplier);
             taskText = `Collect ${amount} Relics for Restoration`;
-        } else if (action === "Restore" && target.includes("Charts")) {
+        } 
+        else if (action === "Restore" && target.includes("Charts")) {
+            let amount = Math.floor((1 + Math.random() * 2) * multiplier);
             taskText = `Fully complete ${amount} ${target}`;
-        } else if (action === "Survive") {
-            taskText = `Survive ${amount} minutes ${target}`;
-        } else if (action === "Cleanse") {
-            taskText = `Cleanse ${amount} ${target}`;
-        } else {
-            taskText = `Secure ${amount} ${target}`;
+        } 
+        else {
+            let amount = Math.floor((4 + Math.random() * 4) * multiplier);
+            taskText = `${action} ${amount} ${target}`;
         }
 
         document.getElementById('output').innerHTML = `Instruction ${step}:<br><strong>${taskText}</strong>`;
@@ -131,17 +142,30 @@
     function completeRefinement(taskText) {
         let data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
         data.logs.push(taskText);
+        localStorage.setItem('purityPathData', JSON.stringify(data));
 
         if (data.logs.length >= 7) {
-            data.cycles = (data.cycles || 0) + 1;
-            data.logs = []; 
-            document.getElementById('output').innerText = "Vessel Purified. The cycle begins anew.";
+            showCycleCompleteUI();
         } else {
             document.getElementById('output').innerText = "The instruction has been observed.";
+            document.getElementById('btnArea').innerHTML = `<button onclick="generateRefinement()">Receive Instruction</button>`;
         }
+        updateUI(data);
+    }
 
+    function showCycleCompleteUI() {
+        document.getElementById('output').innerHTML = "<span style='color:var(--bright-gold)'>VESSEL PURIFIED</span><br>The cycle is complete. All deeds have been recorded.";
+        document.getElementById('btnArea').innerHTML = `<button id="resetBtn" onclick="startNewCycle()">Begin New Purification</button>`;
+    }
+
+    function startNewCycle() {
+        let data = JSON.parse(localStorage.getItem('purityPathData')) || { logs: [], cycles: 0 };
+        data.cycles = (data.cycles || 0) + 1;
+        data.logs = []; 
         localStorage.setItem('purityPathData', JSON.stringify(data));
-        document.getElementById('btnArea').innerHTML = `<button onclick="generateRefinement()">Receive Instruction</button>`;
+        
+        document.getElementById('output').innerText = "A new Path opens before you.";
+        document.getElementById('btnArea').innerHTML = `<button id="mainBtn" onclick="generateRefinement()">Receive Instruction</button>`;
         updateUI(data);
     }
 
